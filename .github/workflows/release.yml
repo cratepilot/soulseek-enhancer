@@ -1,0 +1,76 @@
+# Builds unsigned desktop apps (macOS dmg arm64 + x64, Windows nsis x64) with a
+# bundled slskd, and attaches them to the GitHub Release for the pushed tag.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  SLSKD_VERSION: 0.22.4
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            slskd_asset: osx-arm64
+          - os: macos-13
+            slskd_asset: osx-x64
+          - os: windows-latest
+            slskd_asset: win-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: enhancer
+      - uses: actions/checkout@v4
+        with:
+          repository: cratepilot/soulseek-toolkit
+          path: soulseek-toolkit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build + pack toolkit
+        shell: bash
+        run: |
+          cd soulseek-toolkit
+          npm ci
+          npm run build
+          npm pack
+
+      - name: Install enhancer deps (toolkit from tarball, not symlink)
+        shell: bash
+        run: |
+          cd enhancer
+          npm install
+          npm install --no-save ../soulseek-toolkit/cratepilot-soulseek-toolkit-*.tgz
+
+      - name: Download bundled slskd
+        shell: bash
+        run: |
+          cd enhancer
+          mkdir -p build/slskd
+          curl -sL -o slskd.zip "https://github.com/slskd/slskd/releases/download/${SLSKD_VERSION}/slskd-${SLSKD_VERSION}-${{ matrix.slskd_asset }}.zip"
+          unzip -q slskd.zip -d build/slskd
+          chmod +x build/slskd/slskd* || true
+
+      - name: Build app
+        shell: bash
+        run: |
+          cd enhancer
+          npm run build
+          npm run build:desktop
+          npx electron-builder --publish never
+
+      - name: Attach artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            enhancer/release/*.dmg
+            enhancer/release/*.exe

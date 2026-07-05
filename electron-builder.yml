@@ -1,0 +1,33 @@
+appId: dev.cratepilot.soulseek-enhancer
+productName: Soulseek Enhancer
+directories:
+  output: release
+
+files:
+  - dist/**
+  - dist-electron/**
+  - web/dist/**
+  - package.json
+
+# slskd binaries are downloaded into build/slskd/ by the release workflow
+# (per-platform); absent in plain dev builds, where an external slskd is used.
+extraResources:
+  - from: build/slskd
+    to: slskd
+
+# Unsigned on purpose (pseudonymous publisher): users install at their own
+# discretion. macOS: right-click → Open on first launch. Windows: SmartScreen
+# → More info → Run anyway.
+mac:
+  target:
+    - dmg
+  identity: null
+  category: public.app-category.music
+
+win:
+  target:
+    - nsis
+
+nsis:
+  oneClick: true
+  deleteAppDataOnUninstall: false

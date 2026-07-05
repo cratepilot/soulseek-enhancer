@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-electron/
+web/dist/
+build/
+release/
+data/
+*.tgz
+.DS_Store
+.idea/

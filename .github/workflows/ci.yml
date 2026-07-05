@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: enhancer
+      # The toolkit is consumed as a sibling file: dependency until it is on npm.
+      - uses: actions/checkout@v4
+        with:
+          repository: cratepilot/soulseek-toolkit
+          path: soulseek-toolkit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build toolkit
+        run: |
+          cd soulseek-toolkit
+          npm ci
+          npm run build
+      - name: Build + test enhancer
+        run: |
+          cd enhancer
+          npm install
+          npm run build
+          npm run typecheck
+          npm test
