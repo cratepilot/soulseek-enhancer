@@ -8,7 +8,7 @@
 
 import {spawn, type ChildProcess} from 'node:child_process'
 import {randomBytes} from 'node:crypto'
-import {existsSync} from 'node:fs'
+import {createWriteStream, existsSync} from 'node:fs'
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 
@@ -52,6 +52,10 @@ soulseek:
 
 web:
   port: ${SLSKD_PORT}
+  # HTTPS must be disabled: slskd's HTTPS listener DEFAULTS to port 5031 and
+  # would collide with our HTTP port (verified: self "address already in use").
+  https:
+    disabled: true
   authentication:
     api_keys:
       enhancer:
@@ -76,12 +80,19 @@ export function bundledSlskdPath(resourcesPath: string): string | null {
   return existsSync(candidate) ? candidate : null
 }
 
-/** Spawn slskd against the generated app dir. Caller owns the child. */
+/**
+ * Spawn slskd against the generated app dir, teeing its output into
+ * `<appDir>/slskd.log` so startup failures are diagnosable. Caller owns the child.
+ */
 export function spawnSlskd(binaryPath: string, appDir: string): ChildProcess {
-  return spawn(binaryPath, ['--app-dir', appDir], {
-    stdio: 'ignore',
+  const log = createWriteStream(join(appDir, 'slskd.log'), {flags: 'w'})
+  const child = spawn(binaryPath, ['--app-dir', appDir], {
+    stdio: ['ignore', 'pipe', 'pipe'],
     detached: false,
   })
+  child.stdout?.pipe(log)
+  child.stderr?.pipe(log)
+  return child
 }
 
 /** Poll slskd's health endpoint until it responds or `timeoutMs` elapses. */

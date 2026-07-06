@@ -19,7 +19,7 @@ jobs:
         include:
           - os: macos-latest
             slskd_asset: osx-arm64
-          - os: macos-13
+          - os: macos-15-intel
             slskd_asset: osx-x64
           - os: windows-latest
             slskd_asset: win-x64
@@ -59,6 +59,12 @@ jobs:
           curl -sL -o slskd.zip "https://github.com/slskd/slskd/releases/download/${SLSKD_VERSION}/slskd-${SLSKD_VERSION}-${{ matrix.slskd_asset }}.zip"
           unzip -q slskd.zip -d build/slskd
           chmod +x build/slskd/slskd* || true
+          # slskd's macOS binaries ship with NO signature at all, and Apple
+          # Silicon kills unsigned binaries (SIGKILL). Ad-hoc signing is the
+          # minimum that executes.
+          if [[ "${{ matrix.slskd_asset }}" == osx-* ]]; then
+            codesign --force --sign - build/slskd/slskd
+          fi
 
       - name: Build app
         shell: bash

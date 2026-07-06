@@ -16,8 +16,11 @@ extraResources:
     to: slskd
 
 # Unsigned on purpose (pseudonymous publisher): users install at their own
-# discretion. macOS: right-click → Open on first launch. Windows: SmartScreen
-# → More info → Run anyway.
+# discretion. macOS builds are AD-HOC signed (afterPack hook) — Apple Silicon
+# kills completely-unsigned binaries — and users clear quarantine once with
+# `xattr -cr` (see README). Windows: SmartScreen → More info → Run anyway.
+afterPack: ./scripts/after-pack-adhoc-sign.cjs
+
 mac:
   target:
     - dmg

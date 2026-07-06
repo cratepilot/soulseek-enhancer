@@ -21,6 +21,8 @@ const SERVER_PORT = 5271
 
 let slskdChild: ChildProcess | null = null
 let mainWindow: BrowserWindow | null = null
+// null = external-slskd mode (no bundled binary); boolean = bundled spawn result.
+let slskdHealthy: boolean | null = null
 
 async function boot(): Promise<void> {
   const userData = app.getPath('userData')
@@ -42,7 +44,7 @@ async function boot(): Promise<void> {
     slskdChild.on('exit', (code) => {
       console.warn(`slskd exited with code ${code}`)
     })
-    await waitForSlskd(30_000)
+    slskdHealthy = await waitForSlskd(45_000)
     process.env['SLSKD_BASE_URL'] = `http://127.0.0.1:${SLSKD_PORT}`
     process.env['SLSKD_API_KEY'] = apiKey
   } else {
@@ -68,6 +70,15 @@ async function boot(): Promise<void> {
     webPreferences: {contextIsolation: true, nodeIntegration: false},
   })
   await mainWindow.loadURL(`http://127.0.0.1:${SERVER_PORT}`)
+
+  // Non-blocking: warn about a failed bundled slskd AFTER the UI is usable.
+  if (slskdHealthy === false) {
+    void dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      title: 'Bundled Soulseek daemon failed to start',
+      message: `slskd did not come up within 45 s.\nSee the log at:\n${join(app.getPath('userData'), 'slskd', 'slskd.log')}`,
+    })
+  }
 }
 
 app.whenReady().then(boot).catch((err: unknown) => {

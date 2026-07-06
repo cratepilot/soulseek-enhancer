@@ -8,8 +8,14 @@ Download-only by design — tagging/file management is out of scope.
 
 Grab the installer from **GitHub Releases** — it bundles slskd, so there is nothing else to install:
 
-1. Install and open the app. **The builds are unsigned** (pseudonymous publisher — use at your own discretion): on macOS right-click the app → *Open* on first launch; on Windows click *More info → Run anyway* at the SmartScreen prompt.
-2. Go to **Settings → Soulseek login**, enter your Soulseek username/password, save, and restart the app. The bundled slskd (on its own port, 5031, so it never clashes with an existing slskd) logs in with them.
+1. Install the app. **The builds are unsigned** (pseudonymous publisher — use at your own discretion), so the OS pushes back once:
+   - **macOS** reports the app as "damaged" until you clear the download-quarantine flag. Drag the app to Applications, then run in Terminal:
+     ```
+     xattr -cr "/Applications/Soulseek Enhancer.app"
+     ```
+     and open it normally.
+   - **Windows**: at the SmartScreen prompt click *More info → Run anyway*.
+2. Go to **Settings → Soulseek login**, enter your Soulseek username/password, save, and restart the app. The bundled slskd (on its own port, 5031, so it never clashes with an existing slskd) logs in with them. If the daemon ever misbehaves, its log is at `~/Library/Application Support/Soulseek Enhancer/slskd/slskd.log` (macOS) / `%APPDATA%/Soulseek Enhancer/slskd/slskd.log` (Windows).
 3. Downloads land in `~/Downloads/Soulseek Enhancer/`.
 
 To build installers yourself: `npm run dist` (or push a `v*` tag — the release workflow builds mac arm64/x64 + Windows with bundled slskd).

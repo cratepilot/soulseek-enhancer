@@ -200,6 +200,14 @@ export function buildServer(opts: ServerOpts): FastifyInstance {
   function sendSlskdError(reply: FastifyReply, err: unknown): FastifyReply {
     const message = err instanceof Error ? err.message : String(err)
     app.log.warn({err: message}, 'slskd proxy error')
+    // slskd answers 409 when it is running but NOT logged into the Soulseek
+    // network (first run, wrong credentials, or dropped connection).
+    if (message.includes(' 409 ')) {
+      return reply.status(409).send({error: 'Not connected to the Soulseek network — enter your Soulseek login in Settings and restart the app'})
+    }
+    if (message.includes(' 401 ')) {
+      return reply.status(502).send({error: 'slskd rejected the API key — check SLSKD_API_KEY'})
+    }
     return reply.status(502).send({error: 'Soulseek daemon unreachable — check slskd is running'})
   }
 
