@@ -6,7 +6,7 @@ Download-only by design — tagging/file management is out of scope.
 
 ## Desktop app (macOS / Windows)
 
-Grab the installer from **GitHub Releases** — it bundles slskd, so there is nothing else to install:
+Grab the installer from **GitHub Releases**. It is fully standalone: slskd is bundled inside the app and started for you. **No Docker, no separate slskd install.** (Docker is only mentioned below, under *Running from source*, for developers.)
 
 1. Install the app. **The builds are unsigned** (pseudonymous publisher — use at your own discretion), so the OS pushes back once:
    - **macOS** reports the app as "damaged" until you clear the download-quarantine flag. Drag the app to Applications, then run in Terminal:
@@ -43,9 +43,13 @@ Files whose headers are literally `artist,title,remix,length,copy_text` map auto
 
 **Cleaning rules** (Settings) are find/replace transformations — literal or regex — applied in order to the text fields at import time, e.g. strip ` (Original Mix)` or a label suffix your export tool adds.
 
-## Setup
+## Running from source (developers only)
 
-1. Run slskd (see the toolkit's `infra/docker-compose.slskd.yml` for a ready recipe with a reconnect watchdog). **Bind slskd's downloads folder to a host path** and point `SLSK_DOWNLOADS_ROOT` at it — the enhancer reads completed files from disk.
+If you installed the desktop app, skip this section — it already includes slskd.
+
+When running from source there is no bundled slskd, so you must run one yourself:
+
+1. Run slskd. The easiest way is Docker: see the toolkit's `infra/docker-compose.slskd.yml` for a ready recipe with a reconnect watchdog. A native slskd install works too. **Bind slskd's downloads folder to a host path** and point `SLSK_DOWNLOADS_ROOT` at it — the enhancer reads completed files from disk.
 2. Configure and start:
 
 ```bash
